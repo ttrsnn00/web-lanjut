@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class UserController extends Controller
 {
@@ -16,29 +17,19 @@ class UserController extends Controller
 
         $users = User::query()
             ->when($search, function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
-                });
+                $query
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
             })
             ->latest()
             ->paginate(10)
             ->withQueryString();
 
-        return inertia('users/index', [
-            "totalUsers" => User::count(),
-            "users" => $users->through(fn($user) => [
-                "id" => $user->id,
-                "name" => $user->name,
-                "email" => $user->email,
-                "role" => $user->role,
-                "e_url" => route('users.edit', $user->id),
-                "d_url" => route('users.destroy', $user->id),
-            ]),
-            "filter" => [
-                "search" => $search,
+        return Inertia::render('Users/Index', [
+            'users' => $users,
+            'filters' => [
+                'search' => $search,
             ],
-            "c_url" => route('users.index'),
         ]);
     }
 
@@ -47,7 +38,7 @@ class UserController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('Users/Create');
     }
 
     /**
@@ -55,7 +46,34 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name' => [
+                'required',
+                'max:255',
+            ],
+            'email' => [
+                'required',
+                'email',
+                'unique:users,email',
+            ],
+            'password' => [
+                'required',
+                'min:8',
+            ],
+            'role' => [
+                'required',
+                'in:admin,manager,user',
+            ],
+        ]);
+
+        User::create($validated);
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'User berhasil ditambahkan',
+        ]);
+
+        return redirect()->route('users.index');
     }
 
     /**

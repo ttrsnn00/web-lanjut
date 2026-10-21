@@ -1,6 +1,3 @@
-import { Head, router } from "@inertiajs/react";
-import { useEffect, useState } from "react";
-import { dashboard } from "@/routes";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,116 +9,153 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { create as usersCreate, index as usersIndex } from "@/routes/users";
+import { Head, Link, router } from "@inertiajs/react";
+import { useState } from "react";
 
 type User = {
     id: number;
     name: string;
     email: string;
     role: string;
-    e_url?: string;
-    d_url?: string;
+};
+
+type PaginatedUsers = {
+    data: User[];
+    current_page: number;
+    last_page: number;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+    total: number;
 };
 
 interface Props {
-    users: {
-        data: User[];
-        current_page: number;
-        last_page: number;
-        prev_page_url: string | null;
-        next_page_url: string | null;
+    users: PaginatedUsers;
+    filters: {
+        search: string | null;
     };
-    filter?: {
-        search?: string | null;
-    };
-    c_url: string;
-    totalUsers: number;
 }
 
-export default function UserIndex({ users, filter, c_url, totalUsers }: Props) {
-    const [search, setSearch] = useState(filter?.search ?? "");
+export default function Index({ users, filters }: Props) {
+    const [search, setSearch] = useState(filters.search ?? "");
 
-    useEffect(() => {
-        if (search === (filter?.search ?? "")) return;
+    const visitPage = (url: string | null) => {
+        if (!url) {
+            return;
+        }
 
-        const timer = setTimeout(() => {
-            router.get(
-                c_url,
-                { search },
-                { preserveState: true, replace: true },
-            );
-        }, 300);
-
-        return () => clearTimeout(timer);
-    }, [search]);
-
+        router.visit(url, {
+            preserveScroll: true,
+            preserveState: true,
+        });
+    };
     return (
         <>
-            <Head title="Users Management" />
-            <div className="p-4">
-                <h1 className="mb-2 text-xl font-bold">Daftar User</h1>
-                <p className="mb-4 text-sm text-muted-foreground">
-                    Total User: {totalUsers}
-                </p>
+            <Head title="User Management" />
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+                <div>
+                    <div className="my-4">
+                        <h1 className="text-2xl font-bold">Daftar User</h1>
+                    </div>
+                    <div className="my-4">
+                        <p>Total User: {users.total}</p>
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
+                        <Input
+                            className="w-full max-w-sm"
+                            value={search}
+                            placeholder="Cari User..."
+                            onChange={(event) => {
+                                const value = event.target.value;
 
-                <Input
-                    className="mb-4 max-w-sm"
-                    placeholder="Cari user..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                />
+                                setSearch(value);
 
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>ID</TableHead>
-                            <TableHead>Nama</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead>Role</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {users.data.map((user) => (
-                            <TableRow key={user.id}>
-                                <TableCell>{user.id}</TableCell>
-                                <TableCell>{user.name}</TableCell>
-                                <TableCell>{user.email}</TableCell>
-                                <TableCell>
-                                    <Badge>{user.role}</Badge>
-                                </TableCell>
+                                router.get(
+                                    usersIndex().url,
+                                    {
+                                        search: value,
+                                    },
+                                    {
+                                        preserveState: true,
+                                        replace: true,
+                                    },
+                                );
+                            }}
+                        />
+
+                        <Button asChild>
+                            <Link href={usersCreate().url}>Tambah User</Link>
+                        </Button>
+                    </div>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>ID</TableHead>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Email</TableHead>
+                                <TableHead>Role</TableHead>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                            {users.data.length > 0 ? (
+                                users.data.map((user) => (
+                                    <TableRow key={user.id}>
+                                        <TableCell>{user.id}</TableCell>
+                                        <TableCell>{user.name}</TableCell>
+                                        <TableCell>{user.email}</TableCell>
+                                        <TableCell>
+                                            <Badge>{user.role}</Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={4}
+                                        className="h-24 text-center text-muted-foreground"
+                                    >
+                                        User tidak ditemukan.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
 
-                <div className="mt-4 flex items-center gap-3">
-                    <Button
-                        variant="outline"
-                        disabled={!users.prev_page_url}
-                        onClick={() => router.visit(users.prev_page_url!)}
-                    >
-                        Previous
-                    </Button>
-                    <span className="text-sm">
-                        Halaman {users.current_page} dari {users.last_page}
-                    </span>
-                    <Button
-                        variant="outline"
-                        disabled={!users.next_page_url}
-                        onClick={() => router.visit(users.next_page_url!)}
-                    >
-                        Next
-                    </Button>
+                    <div className="flex items-center justify-between gap-4 border-t pt-4">
+                        <p className="text-sm text-muted-foreground">
+                            Halaman {users.current_page} dari {users.last_page}
+                        </p>
+
+                        <div className="flex items-center gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={!users.prev_page_url}
+                                onClick={() => visitPage(users.prev_page_url)}
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={!users.next_page_url}
+                                onClick={() => visitPage(users.next_page_url)}
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </>
     );
 }
 
-UserIndex.layout = {
+Index.layout = {
     breadcrumbs: [
         {
             title: "User Management",
-            href: dashboard(),
+            href: usersIndex().url,
         },
     ],
 };
