@@ -83,8 +83,11 @@ export default function Index({ users, filters }: Props) {
                             }}
                         />
 
-                        <Button asChild>
-                            <Link href={usersCreate().url}>Tambah User</Link>
+                        <Button
+                            render={<Link href={usersCreate().url} />}
+                            nativeButton={false}
+                        >
+                            Tambah User
                         </Button>
                     </div>
                     <Table>

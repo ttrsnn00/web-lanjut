@@ -135,8 +135,12 @@ export default function Create() {
                                         ? "Menyimpan..."
                                         : "Simpan"}
                                 </Button>
-                                <Button variant="outline" asChild>
-                                    <Link href={usersIndex().url}>Batal</Link>
+                                <Button
+                                    variant="outline"
+                                    render={<Link href={usersIndex().url} />}
+                                    nativeButton={false}
+                                >
+                                    Batal
                                 </Button>
                             </div>
                         </form>

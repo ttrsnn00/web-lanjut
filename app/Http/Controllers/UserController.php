@@ -25,7 +25,7 @@ class UserController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return Inertia::render('Users/Index', [
+        return Inertia::render('users/index', [
             'users' => $users,
             'filters' => [
                 'search' => $search,
@@ -38,7 +38,7 @@ class UserController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Users/Create');
+        return Inertia::render('users/create');
     }
 
     /**
