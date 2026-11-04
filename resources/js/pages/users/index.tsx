@@ -1,3 +1,13 @@
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +19,12 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { create as usersCreate, index as usersIndex } from "@/routes/users";
+import {
+    create as usersCreate,
+    destroy as usersDestroy,
+    edit as usersEdit,
+    index as usersIndex,
+} from "@/routes/users";
 import { Head, Link, router } from "@inertiajs/react";
 import { useState } from "react";
 
@@ -38,6 +53,7 @@ interface Props {
 
 export default function Index({ users, filters }: Props) {
     const [search, setSearch] = useState(filters.search ?? "");
+    const [deletingUser, setDeletingUser] = useState<User | null>(null);
 
     const visitPage = (url: string | null) => {
         if (!url) {
@@ -49,6 +65,16 @@ export default function Index({ users, filters }: Props) {
             preserveState: true,
         });
     };
+
+    const handleDelete = () => {
+        if (!deletingUser) return;
+
+        router.delete(usersDestroy({ user: deletingUser.id }).url, {
+            preserveScroll: true,
+            onSuccess: () => setDeletingUser(null),
+        });
+    };
+
     return (
         <>
             <Head title="User Management" />
@@ -97,6 +123,9 @@ export default function Index({ users, filters }: Props) {
                                 <TableHead>Name</TableHead>
                                 <TableHead>Email</TableHead>
                                 <TableHead>Role</TableHead>
+                                <TableHead className="text-right">
+                                    Aksi
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -109,12 +138,41 @@ export default function Index({ users, filters }: Props) {
                                         <TableCell>
                                             <Badge>{user.role}</Badge>
                                         </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    render={
+                                                        <Link
+                                                            href={
+                                                                usersEdit({
+                                                                    user: user.id,
+                                                                }).url
+                                                            }
+                                                        />
+                                                    }
+                                                    nativeButton={false}
+                                                >
+                                                    Edit
+                                                </Button>
+                                                <Button
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        setDeletingUser(user)
+                                                    }
+                                                >
+                                                    Hapus
+                                                </Button>
+                                            </div>
+                                        </TableCell>
                                     </TableRow>
                                 ))
                             ) : (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={4}
+                                        colSpan={5}
                                         className="h-24 text-center text-muted-foreground"
                                     >
                                         User tidak ditemukan.
@@ -150,6 +208,34 @@ export default function Index({ users, filters }: Props) {
                     </div>
                 </div>
             </div>
+
+            {/* Dialog Konfirmasi Hapus */}
+            <AlertDialog
+                open={!!deletingUser}
+                onOpenChange={(open) => !open && setDeletingUser(null)}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            Konfirmasi Hapus User
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Apakah Anda yakin ingin menghapus user{" "}
+                            <strong>{deletingUser?.name}</strong>? Tindakan ini
+                            tidak dapat dibatalkan.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDelete}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            Ya, Hapus
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
     );
 }
