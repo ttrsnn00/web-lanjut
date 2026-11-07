@@ -21,42 +21,47 @@ export function UserMenuContent({ user }: Props) {
 
     const handleLogout = () => {
         cleanup();
-        router.flushAll();
+        router.post(logout());
     };
 
     return (
         <>
-            <DropdownMenuLabel className="p-0 font-normal">
-                <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                    <UserInfo user={user} showEmail={true} />
-                </div>
-            </DropdownMenuLabel>
+            {/* ✅ Fix 1: Bungkus DropdownMenuLabel ke dalam DropdownMenuGroup */}
+            <DropdownMenuGroup>
+                <DropdownMenuLabel className="p-0 font-normal">
+                    <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                        <UserInfo user={user} showEmail={true} />
+                    </div>
+                </DropdownMenuLabel>
+            </DropdownMenuGroup>
+
             <DropdownMenuSeparator />
+
+            {/* Item Navigasi Settings */}
             <DropdownMenuGroup>
                 <DropdownMenuItem asChild>
                     <Link
-                        className="block w-full cursor-pointer"
+                        className="flex w-full items-center gap-2 cursor-pointer"
                         href={edit()}
                         prefetch
                         onClick={cleanup}
                     >
-                        <Settings className="mr-2" />
-                        Settings
+                        <Settings className="h-4 w-4" />
+                        <span>Settings</span>
                     </Link>
                 </DropdownMenuItem>
             </DropdownMenuGroup>
+
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-                <Link
-                    className="block w-full cursor-pointer"
-                    href={logout()}
-                    as="button"
-                    onClick={handleLogout}
-                    data-test="logout-button"
-                >
-                    <LogOut className="mr-2" />
-                    Log out
-                </Link>
+
+            {/* ✅ Fix 2: Gunakan event onSelect pada DropdownMenuItem tanpa Link as="button" */}
+            <DropdownMenuItem
+                className="flex w-full items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
+                onSelect={handleLogout}
+                data-test="logout-button"
+            >
+                <LogOut className="h-4 w-4" />
+                <span>Log out</span>
             </DropdownMenuItem>
         </>
     );
