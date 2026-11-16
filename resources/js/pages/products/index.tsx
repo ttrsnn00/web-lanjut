@@ -53,6 +53,7 @@ export default function Index({ products, filters }: Props) {
     const [deletingProduct, setDeletingProduct] = useState<Product | null>(
         null,
     );
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const visitPage = (url: string | null) => {
         if (!url) return;
@@ -68,6 +69,8 @@ export default function Index({ products, filters }: Props) {
 
         router.delete(`/products/${deletingProduct.id}`, {
             preserveScroll: true,
+            onStart: () => setIsDeleting(true),
+            onFinish: () => setIsDeleting(false),
             onSuccess: () => setDeletingProduct(null),
         });
     };
@@ -242,7 +245,9 @@ export default function Index({ products, filters }: Props) {
             {/* Dialog Konfirmasi Hapus */}
             <AlertDialog
                 open={!!deletingProduct}
-                onOpenChange={(open) => !open && setDeletingProduct(null)}
+                onOpenChange={(open) =>
+                    !open && !isDeleting && setDeletingProduct(null)
+                }
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -256,12 +261,15 @@ export default function Index({ products, filters }: Props) {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                        <AlertDialogCancel disabled={isDeleting}>
+                            Batal
+                        </AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDelete}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            disabled={isDeleting}
+                            className="bg-destructive text-white hover:bg-destructive/90"
                         >
-                            Ya, Hapus
+                            {isDeleting ? "Menghapus..." : "Ya, Hapus"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
